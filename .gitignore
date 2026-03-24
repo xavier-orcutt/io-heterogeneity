@@ -1,9 +1,19 @@
 # Data and outputs (all cases)
 **/data/
 **/outputs/
+**/data_old/
+**/outputs_old/
 
 # Excluded cases
-
+plots/
+mRCC_ioio_iotki/
+aNSCLC_ioio/
+aNSCLC_val/
+aNSCLC_low/
+mUC--draft/
+gu_asco/
+fig1_plots/
+documents/
 
 # Draft/scratch notebooks
 **/notebooks/_*.ipynb
