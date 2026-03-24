@@ -1,0 +1,17 @@
+# Data and outputs (all cases)
+**/data/
+**/outputs/
+
+# Excluded cases
+
+
+# Draft/scratch notebooks
+**/notebooks/_*.ipynb
+
+# Standard Python/Jupyter ignores
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+.DS_Store
+**/.DS_Store
