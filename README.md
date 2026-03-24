@@ -12,7 +12,7 @@ All analyses use real-world electronic health record data from the Flatiron Heal
 
 ## Cohorts
 
-Five first-line treatment comparisons were analyzed:
+Six first-line treatment comparisons were analyzed:
 
 | Tumor Type | Comparison |
 |---|---|
