@@ -17,6 +17,8 @@ mBC/
 gu_asco/
 fig1_plots/
 documents/
+manuscript/
+tables/
 
 # Draft/scratch notebooks
 **/notebooks/_*.ipynb
