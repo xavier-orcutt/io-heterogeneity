@@ -117,3 +117,100 @@ def cross_validated_survival_predictions(
             print(f"{col_name} computed: {df[col_name].notna().sum()}")
     
     return df
+
+
+from sksurv.linear_model import CoxPHSurvivalAnalysis
+
+def cross_validated_cox_predictions(
+    df,
+    y,
+    all_var,
+    preprocessor,
+    survival_timepoints,
+    tau,
+    alpha,                  # required — no default
+    n_splits=5,
+    random_state=42,
+    verbose=True,
+):
+    """
+    Cross-validated survival predictions using a ridge Cox model.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    y : np.array
+        Structured array with survival outcomes (event, time).
+    all_var : list
+        Feature column names.
+    preprocessor : sklearn transformer
+    survival_timepoints : tuple
+        Timepoints in days at which to evaluate survival probability.
+    tau : int
+        Maximum time for evaluation grid.
+    alpha : float
+        Regularization strength. Required — no default.
+    n_splits : int, default 5
+    random_state : int, default 42
+    verbose : bool, default True
+
+    Returns
+    -------
+    pd.DataFrame
+        Original df with added columns:
+        - 'risk_score'
+        - 'psurv_{timepoint}' for each timepoint
+    """
+    if 'PatientID' in df.columns:
+        df = df.set_index('PatientID')
+
+    all_patient_ids = df.index
+    risk_score_preds = []
+    psurv_preds = {tp: [] for tp in survival_timepoints}
+
+    t_grid = np.linspace(0.0, tau, tau + 1)
+
+    model = CoxPHSurvivalAnalysis(alpha=alpha)
+
+    cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+
+    for fold_idx, (train_idx, test_idx) in enumerate(cv.split(df, df['event'])):
+        if verbose:
+            print(f"Processing fold {fold_idx + 1}/{n_splits}")
+
+        patient_ids_train = all_patient_ids[train_idx]
+        patient_ids_test  = all_patient_ids[test_idx]
+
+        train_df_fold = df.loc[patient_ids_train]
+        test_df_fold  = df.loc[patient_ids_test]
+        train_y_fold  = y[train_idx]
+
+        full_pipeline = Pipeline([
+            ('preprocessor', preprocessor),
+            ('model', model)
+        ])
+        full_pipeline.fit(train_df_fold[all_var], train_y_fold)
+
+        test_predictions = full_pipeline.predict(test_df_fold[all_var])
+        risk_score_preds.extend(zip(patient_ids_test, test_predictions))
+
+        X_test_tx = full_pipeline.named_steps['preprocessor'].transform(test_df_fold[all_var])
+        surv_fns  = full_pipeline.named_steps['model'].predict_survival_function(X_test_tx)
+
+        for pid, fn in zip(patient_ids_test, surv_fns):
+            S_grid = fn(t_grid)
+            for tp in survival_timepoints:
+                psurv_preds[tp].append((pid, float(S_grid[tp])))
+
+    df = df.copy()
+    df['risk_score'] = df.index.map(dict(risk_score_preds))
+    for tp in survival_timepoints:
+        df[f'psurv_{tp}'] = df.index.map(dict(psurv_preds[tp]))
+
+    if verbose:
+        print(f"\nNumber of patients in df: {df.shape[0]}")
+        print(f"risk_scores computed: {df['risk_score'].notna().sum()}")
+        for tp in survival_timepoints:
+            print(f"psurv_{tp} computed: {df[f'psurv_{tp}'].notna().sum()}")
+
+    return df
