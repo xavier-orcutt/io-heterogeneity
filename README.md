@@ -1,6 +1,6 @@
 # io-heterogeneity
 
-Analysis code for Baseline Predicted Survival and Treatment Benefit from First-Line Immune Checkpoint Inhibitor Therapy: A Multicohort Target Trial Emulation Study.
+Analysis code for Machine Learning-Predicted Survival and the Comparative Effectiveness of First-Line Immunotherapy Strategies: A Multicohort Target Trial Emulation Study.
 
 ## Overview
 
